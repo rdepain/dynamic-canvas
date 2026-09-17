@@ -1,174 +1,84 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Dynamic Canvas — un MVP de modélisation en dynamique des systèmes, inspiré de Vensim mais pensé pour une UX simple." />
-  <title>Dynamic Canvas — System Dynamics MVP</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="Dynamic Canvas — modélisation simple de systèmes dynamiques." />
+<title>Dynamic Canvas</title>
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand-wrap">
-        <div class="brand-mark">↻</div>
-        <div>
-          <div class="brand">Dynamic Canvas</div>
-          <div class="brand-subtitle">System dynamics, sans la friction</div>
-        </div>
-      </div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="logo">↻</div><div><strong>Dynamic Canvas</strong><span>System dynamics, sans la friction</span></div></div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="model">Modèle</button>
+      <button class="nav-btn" data-view="simulate">Simuler</button>
+      <button class="nav-btn" data-view="scenarios">Scénarios</button>
+      <button class="nav-btn" data-view="insights">Insights</button>
+    </nav>
+    <div class="actions"><button id="newBtn" class="btn ghost">Nouveau</button><button id="exportBtn" class="btn ghost">Exporter</button><button id="runBtn" class="btn primary">▶ Simuler</button></div>
+  </header>
 
-      <nav class="tabs" aria-label="Navigation principale">
-        <button class="tab is-active" data-view="model">Modèle</button>
-        <button class="tab" data-view="simulate">Simuler</button>
-        <button class="tab" data-view="scenarios">Scénarios</button>
-        <button class="tab" data-view="insights">Insights</button>
-      </nav>
-
-      <div class="top-actions">
-        <button class="button ghost" id="importButton">Importer</button>
-        <button class="button ghost" id="exportButton">Exporter</button>
-        <button class="button primary" id="runButton">▶ Simuler</button>
-      </div>
-    </header>
-
-    <main class="workspace">
-      <aside class="left-rail">
-        <div class="rail-section">
-          <div class="rail-title">Ajouter</div>
-          <button class="tool" data-add="stock"><span class="tool-icon stock-icon"></span><span><strong>Stock</strong><small>S'accumule dans le temps</small></span></button>
-          <button class="tool" data-add="flow"><span class="tool-icon flow-icon">→</span><span><strong>Flux</strong><small>Fait varier un stock</small></span></button>
-          <button class="tool" data-add="variable"><span class="tool-icon variable-icon">ƒ</span><span><strong>Variable</strong><small>Formule ou valeur calculée</small></span></button>
-          <button class="tool" data-add="parameter"><span class="tool-icon parameter-icon">◎</span><span><strong>Paramètre</strong><small>Hypothèse ajustable</small></span></button>
-        </div>
-
-        <div class="rail-section">
-          <div class="rail-title">Relier</div>
-          <button class="tool compact" id="connectButton"><span class="tool-icon connect-icon">↗</span><span><strong>Lien causal</strong><small>Influence + / −</small></span></button>
-        </div>
-
-        <div class="rail-section examples">
-          <div class="rail-title">Démarrer vite</div>
-          <button class="link-button" id="loadExampleButton">↻ Recharger l'exemple adoption</button>
-          <button class="link-button danger-link" id="clearButton">× Nouveau modèle vide</button>
-        </div>
+  <main>
+    <section id="modelView" class="view active">
+      <aside class="sidebar">
+        <div class="sidebar-head"><div><span class="eyebrow">Construire</span><h2>Ajouter au modèle</h2></div></div>
+        <button class="add-card" data-add="stock"><span class="icon stock">▣</span><div><strong>Stock</strong><small>Ce qui s’accumule dans le temps</small></div><span>＋</span></button>
+        <button class="add-card" data-add="flow"><span class="icon flow">→</span><div><strong>Flux</strong><small>Ce qui augmente ou diminue un stock</small></div><span>＋</span></button>
+        <button class="add-card" data-add="variable"><span class="icon variable">ƒ</span><div><strong>Variable</strong><small>Une formule ou un facteur calculé</small></div><span>＋</span></button>
+        <button class="add-card" data-add="parameter"><span class="icon parameter">◎</span><div><strong>Paramètre</strong><small>Une hypothèse que tu peux tester</small></div><span>＋</span></button>
+        <div class="divider"></div>
+        <button id="connectBtn" class="btn wide">↗ Relier deux éléments</button>
+        <button id="exampleBtn" class="text-btn">Recharger l’exemple</button>
       </aside>
 
-      <section class="main-stage">
-        <section class="view is-active" id="view-model">
-          <div class="canvas-toolbar">
-            <div>
-              <strong>Carte du système</strong>
-              <span class="muted" id="canvasHint">Glisse les éléments. Clique pour modifier.</span>
-            </div>
-            <div class="toolbar-right">
-              <button class="chip" id="fitButton">Centrer</button>
-              <button class="chip" id="saveButton">Sauvegarder</button>
-            </div>
-          </div>
-          <div class="canvas-wrap" id="canvasWrap">
-            <svg class="edge-layer" id="edgeLayer" aria-hidden="true"></svg>
-            <div class="canvas" id="canvas"></div>
-            <div class="empty-state hidden" id="emptyState">
-              <div class="empty-visual">↻</div>
-              <h2>Commence par ce qui s'accumule</h2>
-              <p>Ajoute un stock, puis les flux qui le font augmenter ou diminuer.</p>
-              <button class="button primary" data-empty-add="stock">+ Ajouter un stock</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="view" id="view-simulate">
-          <div class="view-header">
-            <div>
-              <div class="eyebrow">Simulation</div>
-              <h1>Que se passe-t-il dans le temps ?</h1>
-              <p>Dynamic Canvas utilise une intégration d'Euler simple pour rendre les modèles légers et transparents.</p>
-            </div>
-            <div class="simulation-settings">
-              <label>Horizon<input id="horizonInput" type="number" min="1" max="240" step="1" value="36" /></label>
-              <label>Pas<input id="dtInput" type="number" min="0.05" max="12" step="0.05" value="1" /></label>
-              <label>Unité<input id="timeUnitInput" value="mois" /></label>
-            </div>
-          </div>
-          <div class="dashboard-grid">
-            <div class="panel chart-panel">
-              <div class="panel-heading">
-                <div><strong>Évolution des stocks</strong><span class="muted" id="simulationStatus">Clique sur Simuler</span></div>
-              </div>
-              <div class="chart-wrap" id="mainChart"></div>
-            </div>
-            <div class="panel metrics-panel">
-              <div class="panel-heading"><strong>Résultats clés</strong></div>
-              <div id="metricsGrid" class="metrics-grid"></div>
-            </div>
-          </div>
-          <div class="panel table-panel">
-            <div class="panel-heading"><strong>Dernières valeurs</strong><span class="muted">Stocks, flux et variables</span></div>
-            <div class="results-table-wrap"><table class="results-table"><thead><tr><th>Élément</th><th>Type</th><th>Symbole</th><th>Valeur finale</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
-          </div>
-        </section>
-
-        <section class="view" id="view-scenarios">
-          <div class="view-header">
-            <div>
-              <div class="eyebrow">Scenario playground</div>
-              <h1>Teste les hypothèses, pas les opinions</h1>
-              <p>Les paramètres deviennent des curseurs. Compare plusieurs futurs à partir du même modèle.</p>
-            </div>
-            <button class="button primary" id="addScenarioButton">+ Nouveau scénario</button>
-          </div>
-          <div class="scenario-layout">
-            <div class="scenario-list" id="scenarioList"></div>
-            <div class="panel scenario-editor-panel">
-              <div id="scenarioEditor"></div>
-            </div>
-          </div>
-          <div class="panel chart-panel scenario-chart-panel">
-            <div class="panel-heading"><div><strong>Comparaison</strong><span class="muted">Courbe du stock principal pour chaque scénario</span></div><select id="scenarioMetricSelect"></select></div>
-            <div class="chart-wrap" id="scenarioChart"></div>
-          </div>
-        </section>
-
-        <section class="view" id="view-insights">
-          <div class="view-header">
-            <div>
-              <div class="eyebrow">Lecture du système</div>
-              <h1>Pourquoi le modèle se comporte comme ça ?</h1>
-              <p>Des heuristiques simples rendent visibles les boucles de rétroaction et les comportements remarquables.</p>
-            </div>
-          </div>
-          <div class="insights-grid">
-            <div class="panel">
-              <div class="panel-heading"><strong>Boucles détectées</strong><span class="muted">Sur la carte causale</span></div>
-              <div id="loopsList" class="insight-list"></div>
-            </div>
-            <div class="panel">
-              <div class="panel-heading"><strong>Lecture de la simulation</strong><span class="muted">Sur la dernière exécution</span></div>
-              <div id="behaviourInsights" class="insight-list"></div>
-            </div>
-            <div class="panel span-2">
-              <div class="panel-heading"><strong>Qualité du modèle</strong><span class="muted">Vérifications avant décision</span></div>
-              <div id="qualityChecks" class="quality-grid"></div>
-            </div>
-          </div>
-        </section>
+      <section class="canvas-shell">
+        <div class="canvas-topline">
+          <div><span class="status-dot"></span><strong id="modelTitle">Adoption d’un produit</strong><span id="modelStats" class="muted"></span></div>
+          <div class="canvas-actions"><button id="helpBtn" class="pill">? Aide</button><button id="saveBtn" class="pill">Sauvegarder</button></div>
+        </div>
+        <div id="canvasWrap" class="canvas-wrap">
+          <svg id="edges" class="edges"></svg>
+          <div id="canvas" class="canvas"></div>
+          <div id="canvasEmpty" class="empty hidden"><div class="empty-icon">↻</div><h2>Commence par ce qui s’accumule</h2><p>Ajoute un stock, puis indique ce qui le fait augmenter ou diminuer.</p><button class="btn primary" data-add="stock">＋ Ajouter un stock</button></div>
+        </div>
       </section>
 
-      <aside class="inspector" id="inspector">
-        <div class="inspector-empty" id="inspectorEmpty">
-          <div class="inspector-icon">⌁</div>
-          <strong>Sélectionne un élément</strong>
-          <p>Ses propriétés, sa formule et ses paramètres apparaîtront ici.</p>
-        </div>
-        <div class="inspector-content hidden" id="inspectorContent"></div>
+      <aside id="inspector" class="inspector">
+        <div id="inspectorEmpty" class="inspector-empty"><div class="inspector-symbol">⌁</div><h3>Sélectionne un élément</h3><p>Tu pourras modifier son nom, sa valeur et sa formule ici.</p></div>
+        <div id="inspectorContent" class="hidden"></div>
       </aside>
-    </main>
+    </section>
+
+    <section id="simulateView" class="view page-view">
+      <div class="page-head"><div><span class="eyebrow">Simulation</span><h1>Que se passe-t-il dans le temps ?</h1><p>Teste le comportement global du modèle sans te perdre dans les équations.</p></div><div class="sim-controls"><label>Durée<input id="horizon" type="number" value="36" min="1" /></label><label>Pas<input id="dt" type="number" value="1" step="0.1" min="0.1" /></label><label>Unité<input id="timeUnit" value="mois" /></label><button id="runBtn2" class="btn primary">▶ Lancer</button></div></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card chart-card"><div class="card-head"><div><h3>Évolution des stocks</h3><p id="chartSubtitle">Dernière simulation</p></div><select id="chartMetric"></select></div><div id="chart" class="chart"></div></div>
+      <div class="card"><div class="card-head"><div><h3>Résultats</h3><p>Valeurs finales du modèle</p></div></div><div id="results" class="results"></div></div>
+    </section>
+
+    <section id="scenariosView" class="view page-view">
+      <div class="page-head"><div><span class="eyebrow">Scenario playground</span><h1>Et si… ?</h1><p>Déplace les curseurs pour comparer rapidement plusieurs futurs possibles.</p></div><button id="addScenario" class="btn primary">＋ Nouveau scénario</button></div>
+      <div class="scenario-grid"><div id="scenarioTabs" class="scenario-tabs"></div><div id="scenarioEditor" class="card scenario-editor"></div></div>
+      <div class="card chart-card"><div class="card-head"><div><h3>Comparer les scénarios</h3><p>Choisis un stock à suivre</p></div><select id="scenarioMetric"></select></div><div id="scenarioChart" class="chart"></div></div>
+    </section>
+
+    <section id="insightsView" class="view page-view">
+      <div class="page-head"><div><span class="eyebrow">Insights</span><h1>Comprendre avant de décider</h1><p>Dynamic Canvas rend visibles les boucles, dépendances et points de vigilance.</p></div></div>
+      <div class="insights-grid"><div class="card"><div class="card-head"><div><h3>Boucles de rétroaction</h3><p>Détectées dans la carte causale</p></div></div><div id="loops"></div></div><div class="card"><div class="card-head"><div><h3>Lecture du comportement</h3><p>Basée sur la dernière simulation</p></div></div><div id="behaviour"></div></div><div class="card span2"><div class="card-head"><div><h3>Qualité du modèle</h3><p>Checklist simple avant utilisation</p></div></div><div id="quality" class="quality"></div></div></div>
+    </section>
+  </main>
+</div>
+
+<div id="welcome" class="modal-backdrop hidden">
+  <div class="welcome-card">
+    <div class="welcome-badge">↻</div><span class="eyebrow">Bienvenue dans Dynamic Canvas</span><h1>Modélise une dynamique complexe<br/>sans devenir expert Vensim.</h1><p>Commence par une question, représente les mécanismes, puis teste tes hypothèses en quelques minutes.</p>
+    <div class="welcome-steps"><div><b>1</b><span><strong>Cartographie</strong><small>Variables et liens causaux</small></span></div><div><b>2</b><span><strong>Simulation</strong><small>Stocks, flux et trajectoires</small></span></div><div><b>3</b><span><strong>Scénarios</strong><small>Teste les hypothèses</small></span></div></div>
+    <div class="welcome-actions"><button id="startExample" class="btn primary big">Explorer l’exemple</button><button id="startBlank" class="btn ghost big">Partir de zéro</button></div>
   </div>
-
-  <div class="toast" id="toast"></div>
-  <input type="file" id="importFileInput" accept="application/json,.json" hidden />
-
-  <script src="app.js"></script>
+</div>
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
 </body>
 </html>
